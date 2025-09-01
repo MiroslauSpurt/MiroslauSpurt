@@ -221,105 +221,34 @@
 
 <p id="response" style="text-align:center;"></p>
 
-function doPost(e) {
-  try {
-    // Parse the incoming JSON data
-    const data = JSON.parse(e.postData.contents);
-    
-    // Extract all three fields
-    const name = data.name || 'Not provided';
-    const email = data.email || '';
-    const message = data.message || 'No message provided';
-    
-    // Validate required email field
-    if (!email) {
-      return ContentService.createTextOutput("error: email required");
-    }
-    
-    // Option 1: Send email notification
-    sendEmailNotification(name, email, message);
-    
-    // Option 2: Save to Google Sheets (uncomment if you want to use this)
-    // saveToSpreadsheet(name, email, message);
-    
-    return ContentService.createTextOutput("success");
-    
-  } catch (error) {
-    console.error('Error processing form:', error);
-    return ContentService.createTextOutput("error");
-  }
-}
+<script>
+    document.getElementById("contactForm").addEventListener("submit", function(e) {
+        e.preventDefault();
 
-function sendEmailNotification(name, email, message) {
-  try {
-    // Replace with your actual email address
-    const yourEmail = "upfinance.al@gmail.com";
-    
-    const subject = `New Contact Form Submission from ${name || email}`;
-    
-    const emailBody = `
-      New contact form submission:
-      
-      Name: ${name}
-      Email: ${email}
-      Message: ${message}
-      
-      Submitted at: ${new Date().toLocaleString()}
-    `;
-    
-    // Send email to yourself
-    GmailApp.sendEmail(yourEmail, subject, emailBody);
-    
-    // Optional: Send auto-reply to the user
-    if (email && email.includes('@')) {
-      const autoReplySubject = "Thank you for contacting RegisAdvisory";
-      const autoReplyBody = `
-        Dear ${name || 'Client'},
-        
-        Thank you for your inquiry. We have received your message and will get back to you within 24 hours.
-        
-        Your submitted information:
-        Name: ${name}
-        Email: ${email}
-        Message: ${message}
-        
-        Best regards,
-        RegisAdvisory Team
-      `;
-      
-      GmailApp.sendEmail(email, autoReplySubject, autoReplyBody);
-    }
-    
-  } catch (error) {
-    console.error('Error sending email:', error);
-    throw error;
-  }
-}
+        const data = {
+            name: document.getElementById("name").value,
+            email: document.getElementById("email").value,
+            message: document.getElementById("message").value
+        };
 
-function saveToSpreadsheet(name, email, message) {
-  try {
-    // Replace 'YOUR_SPREADSHEET_ID' with your actual Google Sheets ID
-    const spreadsheetId = 'YOUR_SPREADSHEET_ID';
-    const sheet = SpreadsheetApp.openById(spreadsheetId).getActiveSheet();
-    
-    // Add headers if the sheet is empty
-    if (sheet.getLastRow() === 0) {
-      sheet.appendRow(['Timestamp', 'Name', 'Email', 'Message']);
-    }
-    
-    // Add the new submission
-    sheet.appendRow([new Date(), name, email, message]);
-    
-  } catch (error) {
-    console.error('Error saving to spreadsheet:', error);
-    throw error;
-  }
-}
-
-// Allow GET requests for testing
-function doGet() {
-  return HtmlService.createHtmlOutput("Contact form handler is running!");
-}
+        fetch("https://script.google.com/macros/s/AKfycbx2Enh3Y2EpKXpR_bR31QawkgNuMSaIhvv_gIuSJhIFy00p5HfVpb3hfgrN2CliyVt7pw/exec", {
+            method: "POST",
+            body: JSON.stringify(data)
+        })
+        .then(res => res.text())
+        .then(res => {
+            if (res === "success") {
+                document.getElementById("response").innerHTML = "<span style='color:green;'>✅ Your message has been sent successfully!</span>";
+                document.getElementById("contactForm").reset(); // очистка формы
+            } else {
+                document.getElementById("response").innerHTML = "<span style='color:red;'>❌ Error sending message.</span>";
+            }
+        })
+        .catch(err => {
+            document.getElementById("response").innerHTML = "<span style='color:red;'>❌ Network error.</span>";
+        });
+    });
+</script>
     <section class="clearfix custom-color-11 section-5" id="contact">
       <div class="clearfix sheet valign-middle-xs sheet-1">
         <p class="custom-font font-montserrat text text-custom-color-12 text-default text-1">Contact Us</p>
